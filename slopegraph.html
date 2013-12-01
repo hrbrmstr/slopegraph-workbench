@@ -82,7 +82,11 @@ stringBBox = function(string, font, aclass) {
 updateWidth = function() {
 	slopeWidth = +$('#slWidth').val() ;
 	$('#widthVal').text(slopeWidth) ;
-	makeSlopegraph() ;
+}
+
+updateHeight = function() {
+	sgHeight = +$('#slHeight').val() ;
+	$('#heightVal').text(sgHeight) ;
 }
 
 $(document).ready(function() {
@@ -177,7 +181,7 @@ makeSlopegraph = function() {
 	          .append("svg")
 						.attr("width", textMargin + textSpace + marginLeft + 
 						               slopeWidth + 
-													 marginRight + textSpace + textMarginRight)
+													 marginRight + textSpace + textMargin + marginRight)
 						.attr("height", sgHeight + marginTop + marginBottom)
 						.attr("id", "slopeSVG");		
 										
@@ -191,14 +195,15 @@ makeSlopegraph = function() {
 										.style("stroke-width", "0.75")
 										.style("stroke-opacity", "1")
 										.style("stroke", function(d) {
-											var slp = d.right - d.left ;
-											if (slp < 0) {
-												return("#CCCCCC") ;
-											} else if (slp == 0) {
-												return("#BAE4B3") ;
-											} else if (slp > 0) {
-												return("#FCAE91") ;
-											}
+											return("#CCCCCC");
+											// var slp = d.right - d.left ;
+											// if (slp < 0) {
+											// 	return("#CCCCCC") ;
+											// } else if (slp == 0) {
+											// 	return("#BAE4B3") ;
+											// } else if (slp > 0) {
+											// 	return("#FCAE91") ;
+											// }
 										});
 										
 	rightLabels = sgSVG.selectAll(".labels")
@@ -290,10 +295,12 @@ makeSlopegraph = function() {
 								  <option>16</option>
 								 </select>		
 					 			<br/>	
-			Slope width: <span id="widthVal"></span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" onChange="updateWidth()" style="width:100px"> 400	
+			Slope width: <span id="widthVal">200</span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" step="10" onChange="updateWidth()" style="width:75px"> 400	
+			<br/><br/>
+			Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="10" onChange="updateHeight()" style="width:75px"> 3000	
 			<br/>
 			<br/>
-			<button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build Slopegraph</button>
+			<button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build/Update Slopegraph</button>
 	  	
 	  </div>
 		
