@@ -8,9 +8,7 @@
 <script src="jquery.fontselector.js" charset="utf-8"></script>
 <script src="jquery-ui-1.10.3.custom.min.js" charset="utf-8"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="bootstrap-slider.js"></script>
 <link href="css/bootstrap.min.css" rel="stylesheet">
-<link href="slider.css" rel="stylesheet">
 <link rel="stylesheet" href="fontselector.css">
 
 <style>
@@ -31,9 +29,11 @@ var csvData = "" ;
 var tmpCSV ;
 var sgData ;
 
-var minVal = Number.MAX_VALUE, maxVal = Number.MIN_VALUE ;
+var minVal = Number.MAX_VALUE, 
+    maxVal = Number.MIN_VALUE ;
 
-var sgHeight = 600, sgWidth = 175 ;
+var sgHeight = 600, 
+    sgWidth = 175 ;
 
 var sgScale ;
 var sgSVG ;
@@ -79,6 +79,12 @@ stringBBox = function(string, font, aclass) {
 		return(txtBBox);
 } 
 
+updateWidth = function() {
+	slopeWidth = +$('#slWidth').val() ;
+	$('#widthVal').text(slopeWidth) ;
+	makeSlopegraph() ;
+}
+
 $(document).ready(function() {
 	
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -106,24 +112,12 @@ $(document).ready(function() {
 	            'Verdana,Verdana'
 	            ]
 	});
-
-	$('#sl1').slider({
-	  formater: function(value) {
-	    return value;
-	  }
-	}).on('slide', function(ev){
-		makeSlopegraph();
-  });
 					
 });
 
 makeSlopegraph = function() {	
-
-	console.log("makeSlopegraph()") ;
 	
 	d3.select("#slopeSVG").remove() ;
-
-	console.log($('#hasHeader').is(':checked')) ;
 
 	minVal = Number.MAX_VALUE;
 	maxVal = Number.MIN_VALUE ;
@@ -172,9 +166,7 @@ makeSlopegraph = function() {
 		}) ;
 	
 	};
-	
-	slopeWidth = +$('#sl1').val() ;
-			
+				
   if ($('#logScale').is(':checked')) {
 	  sgScale = d3.scale.log().domain([minVal, maxVal]).range([sgHeight, 0]); 
 	} else {
@@ -297,10 +289,8 @@ makeSlopegraph = function() {
 								  <option>14</option>
 								  <option>16</option>
 								 </select>		
-					 			<br/>
-								 
-			Slope area width: <input type="text" name="slWidth" id="sl1" value="200" data-slider-min="100" data-slider-max="400" data-slider-step="1" data-slider-value="200" data-slider-orientation="horizontal" data-slider-selection="after"data-slider-tooltip="show">
-			
+					 			<br/>	
+			Slope width: <span id="widthVal"></span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" onChange="updateWidth()" style="width:100px"> 400	
 			<br/>
 			<br/>
 			<button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build Slopegraph</button>
