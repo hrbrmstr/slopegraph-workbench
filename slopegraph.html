@@ -7,8 +7,10 @@
 <script src="http://codeorigin.jquery.com/jquery-2.0.3.min.js" charset="utf-8"></script>
 <script src="jquery.fontselector.js" charset="utf-8"></script>
 <script src="jquery-ui-1.10.3.custom.min.js" charset="utf-8"></script>
+<script src="js/jquery.dataTables.min.js" charset="utf-8"></script>
 <script src="js/bootstrap.min.js"></script>
 <link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="css/jquery.dataTables.css" rel="stylesheet">
 <link rel="stylesheet" href="fontselector.css">
 
 <style>
@@ -27,6 +29,7 @@
 var csvData = "" ;
 var tmpCSV ;
 var sgData ;
+var dt ;
 
 var minVal = Number.MAX_VALUE, 
     maxVal = Number.MIN_VALUE ;
@@ -42,11 +45,14 @@ var marginLeft = 5,
     marginTop = 20,
 		marginBottom = 20 ;
 		
+var titleHeight = 20,
+		titleSpace = 20 ;
+		
 var textSpace = 5 ;
 
 var slopeWidth = 200 ;
 var fontFamily ;
-var fontSize = 10 ;
+var fontSize = 12 ;
 var logScale ;
 var labelFormat = "" ;
 var maxNumWidth = Number.MIN_VALUE,
@@ -54,6 +60,10 @@ var maxNumWidth = Number.MIN_VALUE,
 		
 var leftCollissions = [] ;
 var rightCollissions = [] ;
+
+var tData = [] ;
+var tHead = [] ;
+
 
 stringBBox = function(string, font) { 
     var f = font || '12px Times'; 
@@ -111,7 +121,7 @@ $(document).ready(function() {
 	            'Verdana,Verdana'
 	            ]
 	});
-					
+		
 });
 
 makeSlopegraph = function() {	
@@ -125,7 +135,7 @@ makeSlopegraph = function() {
 	
 	maxNumWidth = Number.MIN_VALUE;
   maxLabelWidth = Number.MIN_VALUE ;
-
+	
 	if ($('#hasHeader').is(':checked')) {
 
 		sgData = d3.csv.parse(csvData, function(d) {
@@ -177,21 +187,44 @@ makeSlopegraph = function() {
 		sgScale = d3.scale.linear().domain([minVal, maxVal]).range([sgHeight, 0]); 
 	};
 	
+	titleHeight = stringBBox("Test", "bold " + fontSize + "px" + fontFamily).height ;
+	
 	sgSVG = d3.select("#slopegraph")
 	          .append("svg")
 						.attr("width", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + 
 													 slopeWidth +
 													 textSpace + maxNumWidth + textSpace + maxLabelWidth + marginRight)
-						.attr("height", sgHeight + marginTop + marginBottom)
+						.attr("height", sgHeight + marginTop + titleHeight + titleSpace + marginBottom)
 						.attr("id", "slopeSVG");		
 										
+
+	leftTitle = sgSVG.append("text")
+										.attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth)
+										.attr("y", marginTop + titleHeight )
+										.attr("font-family", fontFamily)
+										.attr("font-weight", "bold")
+										.attr("font-size", fontSize+"px")
+										.text($('#leftTitle').val())
+										.attr("text-anchor", "end")
+										.attr("fill", "black");
+
+	rightTitle = sgSVG.append("text")
+										 .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth + textSpace)
+										 .attr("y", marginTop + titleHeight )
+										 .attr("font-family", fontFamily)
+ 										 .attr("font-weight", "bold")
+										 .attr("font-size", fontSize+"px")
+										 .text($('#rightTitle').val())
+										 .attr("text-anchor", "start")
+										 .attr("fill", "black");
+
 	slopeLines = sgSVG.selectAll(".slopeline")
 										.data(sgData)
 										.enter().append("line")
 										.attr("x1", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace)
-										.attr("y1", function(d) { return sgScale(d.left) + marginTop ;})
+										.attr("y1", function(d) { return sgScale(d.left) + marginTop + titleHeight + titleSpace ;})
 										.attr("x2", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth)
-										.attr("y2", function(d) { return sgScale(d.right) + marginTop ;})
+										.attr("y2", function(d) { return sgScale(d.right) + marginTop + titleHeight + titleSpace ;})
 										.style("stroke-width", "0.75")
 										.style("stroke-opacity", "1")
 										.style("stroke", function(d) {
@@ -210,7 +243,7 @@ makeSlopegraph = function() {
 										  .data(sgData)
 										  .enter().append("text")
 										  .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth + textSpace)
-										  .attr("y", function(d) { return sgScale(d.right) + marginTop + Math.ceil(fontSize/2) })
+										  .attr("y", function(d) { return sgScale(d.right) + marginTop + titleHeight + titleSpace + Math.ceil(fontSize/2) })
 										  .attr("font-family", fontFamily)
 										  .attr("font-size", fontSize+"px")
 										  .text(function(d) { return(labelNumberFormatter(d.right)); })
@@ -221,19 +254,18 @@ makeSlopegraph = function() {
 										 .data(sgData)
 										 .enter().append("text")
 										 .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth + textSpace + maxNumWidth + textSpace)
-										 .attr("y", function(d) { return sgScale(d.right) + marginTop + Math.ceil(fontSize/2) })
+										 .attr("y", function(d) { return sgScale(d.right) + marginTop + titleHeight + titleSpace + Math.ceil(fontSize/2) })
 										 .attr("font-family", fontFamily)
 										 .attr("font-size", fontSize+"px")
 										 .text(function(d) { return(d.label); })
 										 .attr("text-anchor", "start")
 										 .attr("fill", "black");
 
-
  	leftLabels = sgSVG.selectAll(".labels")
  										 .data(sgData)
  										 .enter().append("text")
  										 .attr("x", marginLeft + maxLabelWidth)
- 										 .attr("y", function(d) { return sgScale(d.left) + marginTop + (fontSize/2) })
+ 										 .attr("y", function(d) { return sgScale(d.left) + marginTop + titleHeight + titleSpace + (fontSize/2) })
  										 .attr("font-family", fontFamily)
  										 .attr("font-size", fontSize+"px")
  										 .text(function(d) { return(d.label); })
@@ -244,12 +276,13 @@ makeSlopegraph = function() {
  										 .data(sgData)
  										 .enter().append("text")
  										 .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth)
- 										 .attr("y", function(d) { return sgScale(d.left) + marginTop + (fontSize/2) })
+ 										 .attr("y", function(d) { return sgScale(d.left) + marginTop + titleHeight + titleSpace + (fontSize/2) })
  										 .attr("font-family", fontFamily)
  										 .attr("font-size", fontSize+"px")
  										 .text(function(d) { return(labelNumberFormatter(d.left)); })
  										 .attr("text-anchor", "end")
  										 .attr("fill", "black");
+
 
 };
 
@@ -261,7 +294,7 @@ makeSlopegraph = function() {
 </div>
 
 	<div class="row">
-	  <div class="col-md-2" style="padding-left:30px;">
+	  <div class="col-md-3" style="padding-left:30px;">
 			Select CSV file: 
 			<input type="file" id="files" name="files[]"  />
 			<output id="list"></output>
@@ -282,8 +315,33 @@ makeSlopegraph = function() {
 			      reader.onload = (function(theFile) {
 			        return function(e) {
 								csvData = e.target.result ;
-								tmpCSV = d3.csv.parseRows(csvData) ;
-								$('#rowCount').text(tmpCSV.length + " rows read") ;
+								tData = [] ;
+								tmpCSV = d3.csv.parseRows(csvData, function(d) {
+									tData.push([ d[0], d[1], d[2] ]);							
+								  return {
+										label:  d.label,
+										 left: +d.left,
+										right: +d.right
+								  };		
+								}) ;
+								$('#rowCount').text(tmpCSV.length + " rows read") ;								
+				
+								if (!(typeof(dt) === 'undefined')) {
+									dt.fnClearTable() ;
+									$('#sgTableDiv').empty();
+								}
+								
+								$('#sgTableDiv').html( '<table cellpadding="0" cellspacing="0" border="0" class="display" id="sgTable"></table>' );
+	
+								dt = $('#sgTable').dataTable( {
+									 "bSort": false,
+									 "bFilter": false,
+									 "bInfo": false,
+									 "iDisplayLength" : -1,
+									 "aaData" : tData,
+									 "aoColumns" : [ { "sTitle" : "label" }, {"sTitle":"left"},{"sTitle":"right"} ] 
+								 } );
+								
 			        };
 			      })(f);
 
@@ -294,8 +352,25 @@ makeSlopegraph = function() {
 			  document.getElementById('files').addEventListener('change', handleFileSelect, false);
 				
 			</script>
-			<div id="rowCount" style="color:red;">
-			</div>
+			<span id="rowCount" style="color:red;"></span>
+			
+			<div class="panel-group" id="accordion">
+			  <div class="panel panel-default">
+			    <div class="panel-heading">
+			      <h4 class="panel-title">
+			        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+			          Data Table
+			        </a>
+			      </h4>
+			    </div>
+			    <div id="collapseOne" class="panel-collapse collapse">
+			      <div class="panel-body">
+							<div id="sgTableDiv"></div>
+			      </div>
+			    </div>
+			  </div>
+			</div>			
+			
 		  <div class="checkbox">
 		    <label>
 		      <input type="checkbox" id="hasHeader"> Has header
@@ -308,29 +383,76 @@ makeSlopegraph = function() {
 			</div>	
 			
 			Label format string: <input type="text" width="10" id="labelFmt" onChange="updateLabelFormat();"/><br/><br/>
-			
-			Select font: <div id="fontSelect" class="fontSelect">
-			    <div class="arrow-down"></div>
-			</div>			<br/>
-
-			Select font size: <select id="fontSize" class="form-control" onChange="fontSize = $('#fontSize').val(); makeSlopegraph();">
+			<div class="panel-group" id="fonts">
+			  <div class="panel panel-default">
+			    <div class="panel-heading">
+			      <h4 class="panel-title">
+			        <a data-toggle="collapse" data-parent="#fonts" href="#fontsC">
+			          Fonts
+			        </a>
+			      </h4>
+			    </div>
+			    <div id="fontsC" class="panel-collapse collapse">
+						<div style="padding-left:20px; padding-bottom:10px; padding-top:10px">
+						Select label font: <div id="fontSelect" class="fontSelect">
+						    <div class="arrow-down"></div>
+						</div>			<br/>
+			Select label font size: <select id="fontSize" class="form-control" style="width:50px" onChange="fontSize = $('#fontSize').val(); makeSlopegraph();">
 								  <option>9</option>
-								  <option selected>10</option>
-								  <option>12</option>
+								  <option>10</option>
+								  <option selected>12</option>
 								  <option>14</option>
 								  <option>16</option>
-								 </select>		
-					 			<br/>	
-			Slope width: <span id="widthVal">200</span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" step="10" onChange="updateWidth()" style="width:105px"> 400	
-			<br/><br/>
-			Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="100" onChange="updateHeight()" style="width:95px"> 3000	
+								 </select>
+							 </div>
+							</div>
+				    </div>
+				  </div>
+				<br/>
+				<div class="panel-group" id="heightwidth">
+				  <div class="panel panel-default">
+				    <div class="panel-heading">
+				      <h4 class="panel-title">
+				        <a data-toggle="collapse" data-parent="#heightwidth" href="#collapseOneB">
+				          Height/Width
+				        </a>
+				      </h4>
+				    </div>
+				    <div id="collapseOneB" class="panel-collapse collapse">
+				      <div class="panel-body">
+								Slope width: <span id="widthVal">200</span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" step="10" onChange="updateWidth()" style="width:105px"> 400	
+								<br/><br/>
+								Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="100" onChange="updateHeight()" style="width:95px"> 3000	
+				      </div>
+				    </div>
+				  </div>
+				</div>			
+				<br/>			
+			<div class="panel-group" id="annotations">
+			  <div class="panel panel-default">
+			    <div class="panel-heading">
+			      <h4 class="panel-title">
+			        <a data-toggle="collapse" data-parent="#annotations" href="#collapseOneA">
+			          Annotations
+			        </a>
+			      </h4>
+			    </div>
+			    <div id="collapseOneA" class="panel-collapse collapse">
+			      <div class="panel-body">
+							Left Axis Title:<br/><input id="leftTitle" type="text" size="30"/><br/>
+							Right Axis Title:<br/><input id="rightTitle" type="text" size="30"/><br/>
+							Chart Description:<br/><textarea id="chartDescription" cols="35" rows="5"></textarea>
+			      </div>
+			    </div>
+			  </div>
+			</div>			
 			<br/>
-			<br/>
-			<button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build/Update Slopegraph</button>
+			
+			<center><button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build/Update Slopegraph</button></center>
 	  	
 	  </div>
 		
-	  <div class="col-md-10" style="vertical-align:top;">
+	  <div class="col-md-9" style="vertical-align:top;">
 			<div id="slopegraph" class="slopegraph" style="overflow-y: scroll;">
 			</div>
 		</div>
