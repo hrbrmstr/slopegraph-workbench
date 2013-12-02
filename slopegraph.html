@@ -15,10 +15,9 @@
 
 #slopegraph {
 	width: 900;
-	height:6000;
+	height:auto;
 	margin-left: 100px;
 	padding: 30px;
-	border:1px solid red;
 }
 
 </style>
@@ -38,36 +37,25 @@ var sgHeight = 600,
 var sgScale ;
 var sgSVG ;
 
-var leftAxis,
-    rightAxis,
-    leftPoints,
-		rightPoints,
-		slopesLines ;
-		
 var marginLeft = 5,
     marginRight = 5, 
     marginTop = 20,
 		marginBottom = 20 ;
-
-var textMarginLeft = 200, 
-    textMarginRight = 200 ;
-
-var showAxes = false,
-    showPoints = false ;
 		
 var textSpace = 5 ;
 
-var textMargin = Number.MIN_VALUE ;
 var slopeWidth = 200 ;
 var fontFamily ;
 var fontSize = 10 ;
 var logScale ;
+var labelFormat = "" ;
+var maxNumWidth = Number.MIN_VALUE,
+    maxLabelWidth = Number.MIN_VALUE ;
 
-stringBBox = function(string, font, aclass) { 
+stringBBox = function(string, font) { 
     var f = font || '12px Times'; 
 		var tmpSVG = d3.select("body").append("svg")
     var text = tmpSVG.append("svg:text") 
-        .attr('class', aclass) 
 				.attr('id', 'tmpsvg')
         .attr("x", 0) 
         .attr("y", 0) 
@@ -87,6 +75,10 @@ updateWidth = function() {
 updateHeight = function() {
 	sgHeight = +$('#slHeight').val() ;
 	$('#heightVal').text(sgHeight) ;
+}
+
+updateLabelFormat = function() {
+	labelFormat = $('#labelFmt').val() ;
 }
 
 $(document).ready(function() {
@@ -122,23 +114,28 @@ $(document).ready(function() {
 makeSlopegraph = function() {	
 	
 	d3.select("#slopeSVG").remove() ;
+	
+	var labelNumberFormatter = d3.format(labelFormat);
 
 	minVal = Number.MAX_VALUE;
 	maxVal = Number.MIN_VALUE ;
-	textMargin = Number.MIN_VALUE ;
+	
+	maxNumWidth = Number.MIN_VALUE;
+  maxLabelWidth = Number.MIN_VALUE ;
 
 	if ($('#hasHeader').is(':checked')) {
 
 		sgData = d3.csv.parse(csvData, function(d) {
 
-			// need min & max for scale		
 			minVal = Math.min(minVal, +d.left, +d.right) ;
 			maxVal = Math.max(maxVal, +d.left, +d.right) ;
-			
-			var lWidth = stringBBox(d.label + " " + d.left, fontSize + "px " + fontFamily).width ;
-			var rWidth = stringBBox(d.label + " " + d.right, fontSize + "px " + fontFamily).width ;
-		
-		  textMargin = Math.max(+textMargin, +lWidth, +rWidth);
+					
+			maxLabelWidth = Math.max(+maxLabelWidth, 
+											         +stringBBox(d.label, fontSize + "px " + fontFamily).width);		
+															 	
+			maxNumWidth = Math.max(+maxNumWidth, 
+											       +stringBBox(labelNumberFormatter(d.left), fontSize + "px " + fontFamily).width
+											       +stringBBox(labelNumberFormatter(d.right), fontSize + "px " + fontFamily).width);
 					
 		  return {
 				label:  d.label,
@@ -152,14 +149,14 @@ makeSlopegraph = function() {
 		
 		sgData = d3.csv.parseRows(csvData, function(d) {
 
-			// need min & max for scale		
 			minVal = Math.min(minVal, +d[1], +d[2]) ;
 			maxVal = Math.max(maxVal, +d[1], +d[2]) ;
-			
-			var lWidth = stringBBox(d[0] + " " + d[1], fontSize + "px " + fontFamily).width ;
-			var rWidth = stringBBox(d[0] + " " + d[2], fontSize + "px " + fontFamily).width ;
-		
-		  textMargin = Math.max(+textMargin, +lWidth, +rWidth);
+
+			maxLabelWidth = Math.max(+maxLabelWidth, 
+											         +stringBBox(d[0], fontSize + "px " + fontFamily).width);			
+			maxNumWidth = Math.max(+maxNumWidth, 
+											       +stringBBox(labelNumberFormatter(d[1]), fontSize + "px " + fontFamily).width
+											       +stringBBox(labelNumberFormatter(d[2]), fontSize + "px " + fontFamily).width);
 					
 		  return {
 				label:  d[0],
@@ -179,18 +176,18 @@ makeSlopegraph = function() {
 	
 	sgSVG = d3.select("#slopegraph")
 	          .append("svg")
-						.attr("width", textMargin + textSpace + marginLeft + 
-						               slopeWidth + 
-													 marginRight + textSpace + textMargin + marginRight)
+						.attr("width", marginLeft + maxLabelWidth + maxNumWidth + textSpace + 
+													 slopeWidth +
+													 textSpace + maxNumWidth + maxLabelWidth + marginRight)
 						.attr("height", sgHeight + marginTop + marginBottom)
 						.attr("id", "slopeSVG");		
 										
 	slopeLines = sgSVG.selectAll(".slopeline")
 										.data(sgData)
 										.enter().append("line")
-										.attr("x1", 0 + marginLeft + textMargin)
+										.attr("x1", marginLeft + maxLabelWidth + maxNumWidth + textSpace)
 										.attr("y1", function(d) { return sgScale(d.left) + marginTop ;})
-										.attr("x2", 0 + marginLeft + textMargin + slopeWidth)
+										.attr("x2", marginLeft + maxLabelWidth + maxNumWidth + textSpace + slopeWidth)
 										.attr("y2", function(d) { return sgScale(d.right) + marginTop ;})
 										.style("stroke-width", "0.75")
 										.style("stroke-opacity", "1")
@@ -205,40 +202,64 @@ makeSlopegraph = function() {
 											// 	return("#FCAE91") ;
 											// }
 										});
+
+	rightNumbers = sgSVG.selectAll(".numbers")
+										  .data(sgData)
+										  .enter().append("text")
+										  .attr("x", marginLeft + maxLabelWidth + maxNumWidth + textSpace + slopeWidth + textSpace)
+										  .attr("y", function(d) { return sgScale(d.right) + marginTop + Math.ceil(fontSize/2) })
+										  .attr("font-family", fontFamily)
+										  .attr("font-size", fontSize+"px")
+										  .text(function(d) { return(labelNumberFormatter(d.right)); })
+										  .attr("text-anchor", "start")
+										  .attr("fill", "black");
 										
 	rightLabels = sgSVG.selectAll(".labels")
 										 .data(sgData)
 										 .enter().append("text")
-										 .attr("x", 0 + marginLeft + textMargin + slopeWidth + textSpace)
-										 .attr("y", function(d) { return sgScale(d.right) + marginTop + (fontSize/2) })
+										 .attr("x", marginLeft + maxLabelWidth + maxNumWidth + textSpace + slopeWidth + textSpace + maxNumWidth)
+										 .attr("y", function(d) { return sgScale(d.right) + marginTop + Math.ceil(fontSize/2) })
 										 .attr("font-family", fontFamily)
 										 .attr("font-size", fontSize+"px")
-										 .text(function(d) { return(d.right + " " + d.label) })
+										 .text(function(d) { return(d.label); })
 										 .attr("text-anchor", "start")
 										 .attr("fill", "black");
 
-	leftLabels = sgSVG.selectAll(".labels")
-										 .data(sgData)
-										 .enter().append("text")
-										 .attr("x", 0 + marginLeft + textMargin - textSpace)
-										 .attr("y", function(d) { return sgScale(d.left) + marginTop + (fontSize/2) })
-										 .attr("font-family", fontFamily)
-										 .attr("font-size", fontSize+"px")
-										 .text(function(d) { return(d.label + " " + d.left) })
-										 .attr("text-anchor", "end")
-										 .attr("fill", "black");
+
+ 	leftLabels = sgSVG.selectAll(".labels")
+ 										 .data(sgData)
+ 										 .enter().append("text")
+ 										 .attr("x", marginLeft + maxLabelWidth)
+ 										 .attr("y", function(d) { return sgScale(d.left) + marginTop + (fontSize/2) })
+ 										 .attr("font-family", fontFamily)
+ 										 .attr("font-size", fontSize+"px")
+ 										 .text(function(d) { return(d.label); })
+ 										 .attr("text-anchor", "end")
+ 										 .attr("fill", "black");
+
+ 	leftNumbers = sgSVG.selectAll(".numbers")
+ 										 .data(sgData)
+ 										 .enter().append("text")
+ 										 .attr("x", marginLeft + maxLabelWidth + maxNumWidth)
+ 										 .attr("y", function(d) { return sgScale(d.left) + marginTop + (fontSize/2) })
+ 										 .attr("font-family", fontFamily)
+ 										 .attr("font-size", fontSize+"px")
+ 										 .text(function(d) { return(labelNumberFormatter(d.left)); })
+ 										 .attr("text-anchor", "end")
+ 										 .attr("fill", "black");
 
 };
 
 </script>
 </head>
 <body>
-<div class="page-header">
+<div class="page-header" style="padding-left:20px;">
   <h1>D3 Slopegraph Workbench</h1>
 </div>
 
 	<div class="row">
 	  <div class="col-md-2" style="padding-left:30px;">
+			Select CSV file: 
 			<input type="file" id="files" name="files[]"  />
 			<output id="list"></output>
 
@@ -270,7 +291,7 @@ makeSlopegraph = function() {
 			  document.getElementById('files').addEventListener('change', handleFileSelect, false);
 				
 			</script>
-			<div id="rowCount">
+			<div id="rowCount" style="color:red;">
 			</div>
 		  <div class="checkbox">
 		    <label>
@@ -282,6 +303,8 @@ makeSlopegraph = function() {
 		      <input type="checkbox" id="logScale"> Log scale
 		    </label>
 			</div>	
+			
+			Label format string: <input type="text" width="10" id="labelFmt" onChange="updateLabelFormat();"/><br/><br/>
 			
 			Select font: <div id="fontSelect" class="fontSelect">
 			    <div class="arrow-down"></div>
@@ -297,7 +320,7 @@ makeSlopegraph = function() {
 					 			<br/>	
 			Slope width: <span id="widthVal">200</span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" step="10" onChange="updateWidth()" style="width:75px"> 400	
 			<br/><br/>
-			Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="10" onChange="updateHeight()" style="width:75px"> 3000	
+			Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="100" onChange="updateHeight()" style="width:75px"> 3000	
 			<br/>
 			<br/>
 			<button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build/Update Slopegraph</button>
@@ -305,7 +328,7 @@ makeSlopegraph = function() {
 	  </div>
 		
 	  <div class="col-md-10" style="vertical-align:top;">
-			<div id="slopegraph" class="slopegraph">
+			<div id="slopegraph" class="slopegraph" style="overflow-y: scroll;">
 			</div>
 		</div>
 		
