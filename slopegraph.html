@@ -40,6 +40,8 @@ var sgHeight = 600,
 var sgScale ;
 var sgSVG ;
 
+var origHead = [ ] ;
+
 var marginLeft = 5,
     marginRight = 5, 
     marginTop = 20,
@@ -92,6 +94,21 @@ updateHeight = function() {
 
 updateLabelFormat = function() {
 	labelFormat = $('#labelFmt').val() ;
+}
+
+hasHeader = function() {
+  if ($('#hasHeader').is(':checked')) {	
+	   origHead = dt.fnGetData(0) ;
+		 $('#leftTitle').val(origHead[1]);
+		 $('#rightTitle').val(origHead[2]);
+	}
+}
+
+function onDragDrop(dragHandler, dropHandler) {
+  var drag = d3.behavior.drag();
+  drag.on("drag", dragHandler)
+		  .on("dragend", dropHandler);
+  return drag;
 }
 
 $(document).ready(function() {
@@ -313,7 +330,9 @@ makeSlopegraph = function() {
 			      var reader = new FileReader();
 
 			      reader.onload = (function(theFile) {
+							
 			        return function(e) {
+								
 								csvData = e.target.result ;
 								tData = [] ;
 								tmpCSV = d3.csv.parseRows(csvData, function(d) {
@@ -324,6 +343,7 @@ makeSlopegraph = function() {
 										right: +d.right
 								  };		
 								}) ;
+								
 								$('#rowCount').text(tmpCSV.length + " rows read") ;								
 				
 								if (!(typeof(dt) === 'undefined')) {
@@ -332,6 +352,10 @@ makeSlopegraph = function() {
 								}
 								
 								$('#sgTableDiv').html( '<table cellpadding="0" cellspacing="0" border="0" class="display" id="sgTable"></table>' );
+							 
+								$('#sgTable tr').click( function() {
+								       $(this).toggleClass('row_selected');
+								} );
 	
 								dt = $('#sgTable').dataTable( {
 									 "bSort": false,
@@ -339,10 +363,11 @@ makeSlopegraph = function() {
 									 "bInfo": false,
 									 "iDisplayLength" : -1,
 									 "aaData" : tData,
-									 "aoColumns" : [ { "sTitle" : "label" }, {"sTitle":"left"},{"sTitle":"right"} ] 
+									 "aoColumns" : [ { "sTitle" : "label" }, { "sTitle":"left" }, { "sTitle":"right" } ] 
 								 } );
-								
+								 
 			        };
+							
 			      })(f);
 
 			      reader.readAsText(f);
@@ -373,16 +398,15 @@ makeSlopegraph = function() {
 			
 		  <div class="checkbox">
 		    <label>
-		      <input type="checkbox" id="hasHeader"> Has header
+		      <input type="checkbox" id="hasHeader" onChange="hasHeader()"> 1st Row Has Header
 		    </label>
 			</div>
 		  <div class="checkbox">
 		    <label>
-		      <input type="checkbox" id="logScale"> Log scale
-		    </label>
+		      <input type="checkbox" id="logScale"> Use Log Scale</input></label> <span class="glyphicon glyphicon-info-sign"></span>
 			</div>	
 			
-			Label format string: <input type="text" width="10" id="labelFmt" onChange="updateLabelFormat();"/><br/><br/>
+			Label format string: <span class="glyphicon glyphicon-info-sign"></span> <input type="text" width="10" id="labelFmt" onChange="updateLabelFormat();"/><br/><br/>
 			<div class="panel-group" id="fonts">
 			  <div class="panel panel-default">
 			    <div class="panel-heading">
