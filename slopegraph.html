@@ -51,6 +51,9 @@ var logScale ;
 var labelFormat = "" ;
 var maxNumWidth = Number.MIN_VALUE,
     maxLabelWidth = Number.MIN_VALUE ;
+		
+var leftCollissions = [] ;
+var rightCollissions = [] ;
 
 stringBBox = function(string, font) { 
     var f = font || '12px Times'; 
@@ -134,7 +137,7 @@ makeSlopegraph = function() {
 											         +stringBBox(d.label, fontSize + "px " + fontFamily).width);		
 															 	
 			maxNumWidth = Math.max(+maxNumWidth, 
-											       +stringBBox(labelNumberFormatter(d.left), fontSize + "px " + fontFamily).width
+											       +stringBBox(labelNumberFormatter(d.left), fontSize + "px " + fontFamily).width,
 											       +stringBBox(labelNumberFormatter(d.right), fontSize + "px " + fontFamily).width);
 					
 		  return {
@@ -155,7 +158,7 @@ makeSlopegraph = function() {
 			maxLabelWidth = Math.max(+maxLabelWidth, 
 											         +stringBBox(d[0], fontSize + "px " + fontFamily).width);			
 			maxNumWidth = Math.max(+maxNumWidth, 
-											       +stringBBox(labelNumberFormatter(d[1]), fontSize + "px " + fontFamily).width
+											       +stringBBox(labelNumberFormatter(d[1]), fontSize + "px " + fontFamily).width,
 											       +stringBBox(labelNumberFormatter(d[2]), fontSize + "px " + fontFamily).width);
 					
 		  return {
@@ -176,18 +179,18 @@ makeSlopegraph = function() {
 	
 	sgSVG = d3.select("#slopegraph")
 	          .append("svg")
-						.attr("width", marginLeft + maxLabelWidth + maxNumWidth + textSpace + 
+						.attr("width", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + 
 													 slopeWidth +
-													 textSpace + maxNumWidth + maxLabelWidth + marginRight)
+													 textSpace + maxNumWidth + textSpace + maxLabelWidth + marginRight)
 						.attr("height", sgHeight + marginTop + marginBottom)
 						.attr("id", "slopeSVG");		
 										
 	slopeLines = sgSVG.selectAll(".slopeline")
 										.data(sgData)
 										.enter().append("line")
-										.attr("x1", marginLeft + maxLabelWidth + maxNumWidth + textSpace)
+										.attr("x1", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace)
 										.attr("y1", function(d) { return sgScale(d.left) + marginTop ;})
-										.attr("x2", marginLeft + maxLabelWidth + maxNumWidth + textSpace + slopeWidth)
+										.attr("x2", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth)
 										.attr("y2", function(d) { return sgScale(d.right) + marginTop ;})
 										.style("stroke-width", "0.75")
 										.style("stroke-opacity", "1")
@@ -206,7 +209,7 @@ makeSlopegraph = function() {
 	rightNumbers = sgSVG.selectAll(".numbers")
 										  .data(sgData)
 										  .enter().append("text")
-										  .attr("x", marginLeft + maxLabelWidth + maxNumWidth + textSpace + slopeWidth + textSpace)
+										  .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth + textSpace)
 										  .attr("y", function(d) { return sgScale(d.right) + marginTop + Math.ceil(fontSize/2) })
 										  .attr("font-family", fontFamily)
 										  .attr("font-size", fontSize+"px")
@@ -217,7 +220,7 @@ makeSlopegraph = function() {
 	rightLabels = sgSVG.selectAll(".labels")
 										 .data(sgData)
 										 .enter().append("text")
-										 .attr("x", marginLeft + maxLabelWidth + maxNumWidth + textSpace + slopeWidth + textSpace + maxNumWidth)
+										 .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth + textSpace + maxNumWidth + textSpace)
 										 .attr("y", function(d) { return sgScale(d.right) + marginTop + Math.ceil(fontSize/2) })
 										 .attr("font-family", fontFamily)
 										 .attr("font-size", fontSize+"px")
@@ -240,7 +243,7 @@ makeSlopegraph = function() {
  	leftNumbers = sgSVG.selectAll(".numbers")
  										 .data(sgData)
  										 .enter().append("text")
- 										 .attr("x", marginLeft + maxLabelWidth + maxNumWidth)
+ 										 .attr("x", marginLeft + maxLabelWidth + textSpace + maxNumWidth)
  										 .attr("y", function(d) { return sgScale(d.left) + marginTop + (fontSize/2) })
  										 .attr("font-family", fontFamily)
  										 .attr("font-size", fontSize+"px")
@@ -318,9 +321,9 @@ makeSlopegraph = function() {
 								  <option>16</option>
 								 </select>		
 					 			<br/>	
-			Slope width: <span id="widthVal">200</span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" step="10" onChange="updateWidth()" style="width:75px"> 400	
+			Slope width: <span id="widthVal">200</span><br/>100 <input type="range" id="slWidth" min="100" max="400" value="200" step="10" onChange="updateWidth()" style="width:105px"> 400	
 			<br/><br/>
-			Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="100" onChange="updateHeight()" style="width:75px"> 3000	
+			Graph height: <span id="heightVal">600</span><br/>300 <input type="range" id="slHeight" min="300" max="3000" value="600" step="100" onChange="updateHeight()" style="width:95px"> 3000	
 			<br/>
 			<br/>
 			<button type="button" class="btn btn-primary" onClick="makeSlopegraph()">Build/Update Slopegraph</button>
