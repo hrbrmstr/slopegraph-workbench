@@ -3,12 +3,16 @@
 <head>
 <title>D3 Slopegraph Workshop</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script src="http://codeorigin.jquery.com/jquery-2.0.3.min.js" charset="utf-8"></script>
+<script src="js/d3.v3.min.js" charset="utf-8"></script>
+<script src="js/jquery-2.0.3.min.js" charset="utf-8"></script>
 <script src="jquery.fontselector.js" charset="utf-8"></script>
 <script src="jquery-ui-1.10.3.custom.min.js" charset="utf-8"></script>
 <script src="js/jquery.dataTables.min.js" charset="utf-8"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="js/vkbeautify.js"></script>
+<script type="text/javascript" src="js/rgbcolor.js"></script> 
+<script type="text/javascript" src="js/StackBlur.js"></script>
+<script type="text/javascript" src="js/canvg.js"></script> 
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <link href="css/jquery.dataTables.css" rel="stylesheet">
 <link rel="stylesheet" href="fontselector.css">
@@ -65,6 +69,8 @@ var rightCollissions = [] ;
 
 var tData = [] ;
 var tHead = [] ;
+
+var serializer = new XMLSerializer() ;
 
 
 stringBBox = function(string, font) { 
@@ -212,6 +218,7 @@ makeSlopegraph = function() {
 													 slopeWidth +
 													 textSpace + maxNumWidth + textSpace + maxLabelWidth + marginRight)
 						.attr("height", sgHeight + marginTop + titleHeight + titleSpace + marginBottom)
+						.attr("xmlns","http://www.w3.org/2000/svg")
 						.attr("id", "slopeSVG");		
 										
 
@@ -300,6 +307,21 @@ makeSlopegraph = function() {
  										 .attr("text-anchor", "end")
  										 .attr("fill", "black");
 
+										 $('#svgTagsPre').text(vkbeautify.xml(
+											 '<?xml version="1.0" standalone="no"?>' + 
+											 '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">' +	
+											 serializer.serializeToString($('#slopeSVG')[0])
+										 )) ;
+										 
+	 $('#slopebmap').remove() ;
+	
+	 $('#bmap').html('<center><canvas id="slopebmap" height="' + 
+				 (sgHeight + marginTop + titleHeight + titleSpace + marginBottom)
+				 + '" width="' +  (marginLeft + maxLabelWidth + textSpace + maxNumWidth + textSpace + slopeWidth +
+				 textSpace + maxNumWidth + textSpace + maxLabelWidth + marginRight) + '"></canvas></center>	') ;
+		
+	 canvg(document.getElementById('slopebmap'), serializer.serializeToString($('#slopeSVG')[0]))				 						
+								 
 
 };
 
@@ -371,20 +393,28 @@ makeSlopegraph = function() {
 			      })(f);
 
 			      reader.readAsText(f);
+						
 			    };
 			  };
 
 			  document.getElementById('files').addEventListener('change', handleFileSelect, false);
 				
 			</script>
-			<span id="rowCount" style="color:red;"></span>
 			
+			<span id="rowCount" style="color:red;"></span>
+						
+		  <div class="checkbox">
+		    <label>
+		      <input type="checkbox" id="hasHeader" onChange="hasHeader()"> 1st Row Has Header
+		    </label>
+			</div>
+
 			<div class="panel-group" id="accordion">
 			  <div class="panel panel-default">
 			    <div class="panel-heading">
 			      <h4 class="panel-title">
 			        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-			          Data Table
+			          Data Table Review
 			        </a>
 			      </h4>
 			    </div>
@@ -395,24 +425,35 @@ makeSlopegraph = function() {
 			    </div>
 			  </div>
 			</div>			
+			<br/>
+			<div class="panel-group" id="dataCollapseDiv">
+			  <div class="panel panel-default">
+			    <div class="panel-heading">
+			      <h4 class="panel-title">
+			        <a data-toggle="collapse" data-parent="#dataCollapseDiv" href="#dataCollapse">
+			          Data Format Options
+			        </a>
+			      </h4>
+			    </div>
+			    <div id="dataCollapse" class="panel-collapse collapse">
+			      <div class="panel-body">
+						  <div class="checkbox">
+						    <label>
+						      <input type="checkbox" id="logScale"> Use Log Scale</input></label> <span class="glyphicon glyphicon-info-sign"></span>
+							</div>	
 			
-		  <div class="checkbox">
-		    <label>
-		      <input type="checkbox" id="hasHeader" onChange="hasHeader()"> 1st Row Has Header
-		    </label>
+							Label format string: <span class="glyphicon glyphicon-info-sign"></span> <input type="text" width="10" id="labelFmt" onChange="updateLabelFormat();"/>
+			      </div>
+			    </div>
+			  </div>
 			</div>
-		  <div class="checkbox">
-		    <label>
-		      <input type="checkbox" id="logScale"> Use Log Scale</input></label> <span class="glyphicon glyphicon-info-sign"></span>
-			</div>	
-			
-			Label format string: <span class="glyphicon glyphicon-info-sign"></span> <input type="text" width="10" id="labelFmt" onChange="updateLabelFormat();"/><br/><br/>
+			<br/>
 			<div class="panel-group" id="fonts">
 			  <div class="panel panel-default">
 			    <div class="panel-heading">
 			      <h4 class="panel-title">
 			        <a data-toggle="collapse" data-parent="#fonts" href="#fontsC">
-			          Fonts
+			          Base Font Selection
 			        </a>
 			      </h4>
 			    </div>
@@ -433,12 +474,50 @@ makeSlopegraph = function() {
 				    </div>
 				  </div>
 				<br/>
+
+				<div class="panel-group" id="collDiv">
+				  <div class="panel panel-default">
+				    <div class="panel-heading">
+				      <h4 class="panel-title">
+				        <a data-toggle="collapse" data-parent="#collDiv" href="#collisions">
+				          Collision Handling
+				        </a> <span class="glyphicon glyphicon-info-sign">
+				      </h4>
+				    </div>
+				    <div id="collisions" class="panel-collapse collapse">
+				      <div class="panel-body">
+								<div class="radio">
+								  <label>
+								    <input type="radio" name="collRad" id="optionsColl1" value="none" checked>
+								    None
+								  </label> 
+								</div>
+								<div class="radio">
+								  <label>
+								    <input type="radio" name="collRad" id="optionsColl2" value="horiz">
+								    Align horizontal
+								  </label>
+								</div>			
+								<div class="radio">
+								  <label>
+								    <input type="radio" name="collRad" id="optionsColl3" value="stack">
+								    Stack and offset
+								  </label> 
+								</div>			
+				      </div>
+				    </div>
+				  </div>
+				</div>
+				<br/>
+
+
+
 				<div class="panel-group" id="heightwidth">
 				  <div class="panel panel-default">
 				    <div class="panel-heading">
 				      <h4 class="panel-title">
 				        <a data-toggle="collapse" data-parent="#heightwidth" href="#collapseOneB">
-				          Height/Width
+				          Slopegraph Dimensions
 				        </a>
 				      </h4>
 				    </div>
@@ -457,7 +536,7 @@ makeSlopegraph = function() {
 			    <div class="panel-heading">
 			      <h4 class="panel-title">
 			        <a data-toggle="collapse" data-parent="#annotations" href="#collapseOneA">
-			          Annotations
+			          Slopegraph Annotations
 			        </a>
 			      </h4>
 			    </div>
@@ -477,8 +556,30 @@ makeSlopegraph = function() {
 	  </div>
 		
 	  <div class="col-md-9" style="vertical-align:top;">
-			<div id="slopegraph" class="slopegraph" style="overflow-y: scroll;">
-			</div>
+			
+	    <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+	        <li class="active"><a href="#previewTab" data-toggle="tab">Preview</a></li>
+	        <li><a href="#svgTab" data-toggle="tab">SVG (tags)</a></li>
+	        <li><a href="#bitTab" data-toggle="tab">Bitmap</a></li>
+	    </ul>
+	    <div id="my-tab-content" class="tab-content">
+	        <div class="tab-pane active" id="previewTab">
+	            <h3>Preview</h3>
+	            <div id="slopegraph" class="slopegraph" style="overflow-y: scroll;"></div>
+	        </div>
+	        <div class="tab-pane" id="svgTab">
+	            <h3>SVG (tags)</h3>
+	            <div id="svgTags" class="prettyprint" style="border:1px solid red ;width:auto; height:auto; max-height:100%; overflow:auto" contentEditable>
+								<pre id="svgTagsPre"></pre>
+	            </div>
+	        </div>
+	        <div class="tab-pane" id="bitTab">
+	            <h3>Bitmap</h3>
+	            <div id="bmap"></div>
+	        </div>
+	    </div>			
+			
+			
 		</div>
 		
 </div>
