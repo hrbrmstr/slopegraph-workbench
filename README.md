@@ -9,3 +9,5 @@ It needs work but is a decent framework.
 
 You can drag individual labels around on the axes, but I need to get "collision handling" working.
 
+Live preview at: http://rud.is/workbench
+
